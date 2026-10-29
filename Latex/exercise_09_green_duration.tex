@@ -1,0 +1,55 @@
+\clearpage
+\section*{Exercise 9: Increasing the Green LED Duration}
+\addcontentsline{toc}{section}{Exercise 9: Increasing the Green LED Duration}
+
+\begin{questionbox}{1. Problem Statement}
+Use Button 2 to modify the green-light duration and Button 3 to confirm the selected value. The amber duration remains unchanged, and the red duration is recalculated to maintain the timing relationship.
+\end{questionbox}
+
+\vspace{0.4cm}
+\textbf{2. Green-duration Configuration}
+
+Mode 4 loads \texttt{greenTimeSeconds} into the selected timing value. Button 2 increases the selection on a short press, while the supplied code supports a decrement on a long press. Button 3 commits the selected green duration.
+
+The confirmation logic sets the green value and derives the red value from the unchanged amber value:
+
+\begin{lstlisting}[language=C, caption={Green timing confirmation}, label={lst:exercise9_green_confirm}, captionpos=b]
+else if (mode == MODE_SET_GREEN) {
+    greenTimeSeconds = selectedTimeSeconds;
+    redTimeSeconds =
+        (uint8_t)(greenTimeSeconds + yellowTimeSeconds);
+}
+\end{lstlisting}
+
+The valid green range starts at 1 and ends at \(99 - T_{\mathrm{amber}}\), ensuring that the derived red time remains no greater than 99. For example, with amber = 3, increasing green from 7 to 8 and confirming changes red from 10 to 11 while amber stays at 3.
+
+\textbf{3. Display and LED Feedback}
+
+During Mode 4, the vertical display shows the selected green duration and the horizontal display shows mode number 4. The green logical outputs blink; red and amber outputs are off while the system is in configuration mode. The saved timing is used by the normal traffic sequence after the application returns to Mode 1.
+
+\begin{resultbox}
+The implementation keeps the green and amber values as the independently editable values and derives red from their sum. This prevents the configuration from violating \(T_{\mathrm{red}} = T_{\mathrm{green}} + T_{\mathrm{amber}}\).
+\end{resultbox}
+
+\vspace{0.2cm}
+\vspace{0.15cm}
+\noindent\textbf{GitHub source repository:} \href{https://github.com/haunguyen-2006/STM32LAB1}{STM32LAB1}.
+
+% IMAGE SLOT: Add the screenshot described below and save it as ex09_green_duration_mode4.png in the images/ folder.
+% If the file is absent, a labeled placeholder is displayed; the document remains compilable.
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/ex09_green_duration_mode4.png}{%
+        \includegraphics[width=0.98\textwidth]{images/ex09_green_duration_mode4.png}%
+    }{%
+        \fbox{\parbox[c][4.4cm][c]{0.92\textwidth}{%
+            \centering\textbf{IMAGE SLOT -- Mode 4 green-duration configuration}\\[6pt]
+            Insert a Proteus screenshot of Mode 4 showing the green LEDs blinking, the selected green timing value, and mode number 4.\\[6pt]
+            \texttt{images/ex09\_green\_duration\_mode4.png}%
+        }}%
+    }
+    \caption{Mode 4: green-duration configuration and LED feedback}
+    \label{fig:exercise9_green_mode_simulation}
+\end{figure}
+
+

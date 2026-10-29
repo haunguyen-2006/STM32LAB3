@@ -1,0 +1,59 @@
+\clearpage
+\section*{Exercise 8: Increasing the Amber LED Duration}
+\addcontentsline{toc}{section}{Exercise 8: Increasing the Amber LED Duration}
+
+\begin{questionbox}{1. Problem Statement}
+Use Button 2 to modify the amber-light duration and Button 3 to confirm the selected value. The red and green timings must remain consistent with the selected amber duration.
+\end{questionbox}
+
+\vspace{0.4cm}
+\textbf{2. Amber-duration Configuration}
+
+Mode 3 loads \texttt{yellowTimeSeconds} into \texttt{selectedTimeSeconds}. Although the PDF calls this color amber, the source code uses the name \texttt{yellow}. A short Button 2 press increases the selected value by one unit; a long press requests a decrement. Button 3 saves the selected amber duration.
+
+The confirmation logic updates the amber and red values while leaving the green duration unchanged:
+
+\begin{lstlisting}[language=C, caption={Amber timing confirmation}, label={lst:exercise8_amber_confirm}, captionpos=b]
+else if (mode == MODE_SET_YELLOW) {
+    yellowTimeSeconds = selectedTimeSeconds;
+    redTimeSeconds =
+        (uint8_t)(greenTimeSeconds + yellowTimeSeconds);
+}
+\end{lstlisting}
+
+The timing relationship remains
+\[
+    T_{\mathrm{red}} = T_{\mathrm{green}} + T_{\mathrm{amber}}.
+\]
+The upper bound is calculated as \(99 - T_{\mathrm{green}}\), so the derived red value does not exceed 99. The lower bound for the selected amber value is 1. At the current defaults, green is 7 and amber is 3; changing amber to 4 and confirming produces red = 11, amber = 4, and green = 7.
+
+\textbf{3. Display and LED Feedback}
+
+While Mode 3 is active, the vertical two-digit display shows the proposed amber duration and the horizontal display shows mode number 3. The amber/yellow logical outputs blink while red and green outputs remain off. The value only becomes the saved configuration when Button 3 is pressed.
+
+\begin{resultbox}
+Changing the amber duration leaves green unchanged and recalculates red as green plus amber. The software uses a variable named \texttt{yellowTimeSeconds} for the amber value.
+\end{resultbox}
+
+\vspace{0.2cm}
+\vspace{0.15cm}
+\noindent\textbf{GitHub source repository:} \href{https://github.com/haunguyen-2006/STM32LAB1}{STM32LAB1}.
+
+% IMAGE SLOT: Add the screenshot described below and save it as ex08_amber_duration_mode3.png in the images/ folder.
+% If the file is absent, a labeled placeholder is displayed; the document remains compilable.
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/ex08_amber_duration_mode3.png}{%
+        \includegraphics[width=0.98\textwidth]{images/ex08_amber_duration_mode3.png}%
+    }{%
+        \fbox{\parbox[c][4.4cm][c]{0.92\textwidth}{%
+            \centering\textbf{IMAGE SLOT -- Mode 3 amber-duration configuration}\\[6pt]
+            Insert a Proteus screenshot of Mode 3 showing the amber/yellow LEDs blinking, the selected amber timing value, and mode number 3.\\[6pt]
+            \texttt{images/ex08\_amber\_duration\_mode3.png}%
+        }}%
+    }
+    \caption{Mode 3: amber-duration configuration and LED feedback}
+    \label{fig:exercise8_amber_mode_simulation}
+\end{figure}
+
+

@@ -1,0 +1,79 @@
+\clearpage
+\section*{Exercise 5: Adding Code for Button Debouncing}
+\addcontentsline{toc}{section}{Exercise 5: Adding Code for Button Debouncing}
+
+\begin{questionbox}{1. Problem Statement}
+Add button-reading and debouncing logic, and use Button 1 to advance through the operating modes without interpreting mechanical contact bounce as multiple button presses.
+\end{questionbox}
+
+\vspace{0.4cm}
+\textbf{2. Debouncing Method}
+
+The code samples the three active-low button inputs from the TIM2 callback. For each button, it stores the last raw state, the accepted stable state, and a sample counter. A change is accepted only after the new raw state has remained consistent for the configured number of samples:
+
+\begin{lstlisting}[language=C, caption={Core stable-state filter from main.c}, label={lst:exercise5_debounce}, captionpos=b]
+#define DEBOUNCE_SAMPLES 2U
+
+if (rawState != buttonFilters[i].lastRawState) {
+    buttonFilters[i].lastRawState = rawState;
+    buttonFilters[i].stableSampleCount = 0U;
+} else if (buttonFilters[i].stableSampleCount < DEBOUNCE_SAMPLES) {
+    buttonFilters[i].stableSampleCount++;
+}
+
+if ((buttonFilters[i].stableSampleCount >= DEBOUNCE_SAMPLES) &&
+    (buttonFilters[i].stableState != rawState)) {
+    buttonFilters[i].stableState = rawState;
+    /* Generate the relevant button event on a stable transition. */
+}
+\end{lstlisting}
+
+With a 10 ms sampling interval and two consecutive stable samples, the filter rejects short transitions and accepts a stable state after approximately 20 ms. Button 1 and Button 3 generate events on a debounced transition to the pressed state (logic LOW). Button 2 is treated separately so the program can distinguish a short press from a long press.
+
+\textbf{3. Mode Change Handling}
+
+Button events are stored in flags and consumed by the event-processing function in the main loop. This avoids performing the full application logic inside the timer interrupt. When Button 1 is pressed, \texttt{EnterNextMode()} advances the mode sequence:
+
+\begin{lstlisting}[language=C, caption={Mode sequence used by Button 1}, label={lst:exercise5_mode_sequence}, captionpos=b]
+case MODE_NORMAL:
+    mode = MODE_SET_RED;
+    selectedTimeSeconds = redTimeSeconds;
+    break;
+case MODE_SET_RED:
+    mode = MODE_SET_YELLOW;
+    selectedTimeSeconds = yellowTimeSeconds;
+    break;
+case MODE_SET_YELLOW:
+    mode = MODE_SET_GREEN;
+    selectedTimeSeconds = greenTimeSeconds;
+    break;
+\end{lstlisting}
+
+After the green configuration mode, the next Button 1 event returns the application to normal operation. The supplied implementation keeps the input and display functions in \texttt{main.c}; it does not split them into separate source files, although the lab statement mentions adding input-reading and output-display files.
+
+\textbf{4. Review Note}
+
+The code comments describe a one-second long press, but the configured threshold is 1500 ms, which corresponds to 1.5 seconds with the current 10 ms tick. This should be reconciled if a one-second threshold is intended.
+
+\vspace{0.2cm}
+\vspace{0.15cm}
+\noindent\textbf{GitHub source repository:} \href{https://github.com/haunguyen-2006/STM32LAB1}{STM32LAB1}.
+
+% IMAGE SLOT: Add the screenshot described below and save it as ex05_button_mode_transition.png in the images/ folder.
+% If the file is absent, a labeled placeholder is displayed; the document remains compilable.
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/ex05_button_mode_transition.png}{%
+        \includegraphics[width=0.98\textwidth]{images/ex05_button_mode_transition.png}%
+    }{%
+        \fbox{\parbox[c][4.4cm][c]{0.92\textwidth}{%
+            \centering\textbf{IMAGE SLOT -- Button-debouncing demonstration}\\[6pt]
+            Insert a Proteus screenshot of the running circuit while testing Button 1. The screenshot should show the selected mode on the display and a clear, stable result after a single press (not repeated mode changes).\\[6pt]
+            \texttt{images/ex05\_button\_mode\_transition.png}%
+        }}%
+    }
+    \caption{Proteus observation while validating button debouncing and mode switching}
+    \label{fig:exercise5_button_debounce_test}
+\end{figure}
+
+

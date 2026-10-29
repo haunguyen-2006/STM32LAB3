@@ -1,0 +1,70 @@
+\clearpage
+\section*{Exercise 3: Create STM32 Project}
+\addcontentsline{toc}{section}{Exercise 3: Create STM32 Project}
+
+\begin{questionbox}{1. Problem Statement}
+Create an STM32 project whose GPIO assignments match the Proteus design, and configure a timer interrupt with an interval of approximately 10 ms.
+\end{questionbox}
+
+\vspace{0.4cm}
+\textbf{2. Project Configuration}
+
+The supplied project targets an STM32F1 device and uses the STM32 HAL. The clock configuration selects the internal high-speed oscillator (HSI) at 8 MHz without enabling the PLL. GPIO initialization enables ports A and B, configures the traffic-light and display signals as outputs, and configures PA13--PA15 as active-low button inputs with pull-ups.
+
+The timer setup is defined in \texttt{MX\_TIM2\_Init()}:
+
+\begin{lstlisting}[language=C, caption={TIM2 prescaler and period settings}, label={lst:exercise3_tim2}, captionpos=b]
+htim2.Instance = TIM2;
+htim2.Init.Prescaler = 7999;
+htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+htim2.Init.Period = 9;
+htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+\end{lstlisting}
+
+\textbf{3. Timer Calculation}
+
+Assuming the TIM2 input clock is 8 MHz, the prescaler and auto-reload values give the following update interval:
+
+\[
+ f_{\mathrm{counter}} = \frac{8\,\mathrm{MHz}}{7999+1} = 1\,\mathrm{kHz}
+\]
+\[
+ f_{\mathrm{update}} = \frac{1\,\mathrm{kHz}}{9+1} = 100\,\mathrm{Hz}
+ \qquad\Longrightarrow\qquad
+ T_{\mathrm{update}} = 10\,\mathrm{ms}.
+\]
+
+The main loop starts the timer in interrupt mode with \texttt{HAL\_TIM\_Base\_Start\_IT()}, while \texttt{HAL\_TIM\_PeriodElapsedCallback()} advances the software tick counter and samples the buttons. The timer callback is therefore the shared time base for button filtering, traffic-phase timing, and LED blinking.
+
+\textbf{4. Implementation Notes}
+
+\begin{itemize}[leftmargin=1.2cm]
+    \item \texttt{main.h} centralizes the GPIO pin definitions so the implementation uses consistent signal names.
+    \item The seven-segment display is multiplexed: PA8--PA11 select one digit at a time, while the corresponding segment bus is written on GPIOB.
+    \item The uploaded \texttt{main.c} does not include the HAL MSP initialization or the startup interrupt-handler file. The CubeIDE project must also enable the TIM2 peripheral clock and NVIC interrupt, and route \texttt{TIM2\_IRQHandler()} to \texttt{HAL\_TIM\_IRQHandler(\&htim2)}.
+\end{itemize}
+
+% IMAGE SLOT: Add the screenshot described below and save it as ex03_cubeide_tim2_configuration.png in the images/ folder.
+% If the file is absent, a labeled placeholder is displayed; the document remains compilable.
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/ex03_cubeide_tim2_configuration.png}{%
+        \includegraphics[width=0.98\textwidth]{images/ex03_cubeide_tim2_configuration.png}%
+    }{%
+        \fbox{\parbox[c][4.3cm][c]{0.92\textwidth}{%
+            \centering\textbf{IMAGE SLOT -- STM32CubeIDE project and TIM2 settings}\\[6pt]
+            Insert a screenshot from STM32CubeIDE showing the project/source file and the TIM2 prescaler/period values (PSC = 7999, ARR = 9), or a successful build view alongside those settings.\\[6pt]
+            \texttt{images/ex03\_cubeide\_tim2\_configuration.png}%
+        }}%
+    }
+    \caption{STM32CubeIDE setup used for the 10 ms TIM2 update}
+    \label{fig:exercise3_cubeide_tim2}
+\end{figure}
+
+\begin{center}
+    \href{https://github.com/haunguyen-2006/STM32LAB1}{\textbf{GitHub -- STM32LAB1 Source Repository}}
+\end{center}
+
+\begin{resultbox}
+With an 8 MHz timer input clock, PSC = 7999 and ARR = 9 produce the required 10 ms timer update. This calculation depends on the actual timer clock and on the TIM2 clock/NVIC setup in the rest of the STM32 project.
+\end{resultbox}

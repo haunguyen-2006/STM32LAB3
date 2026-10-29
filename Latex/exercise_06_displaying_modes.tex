@@ -1,0 +1,66 @@
+\clearpage
+\section*{Exercise 6: Adding Code for Displaying Modes}
+\addcontentsline{toc}{section}{Exercise 6: Adding Code for Displaying Modes}
+
+\begin{questionbox}{1. Problem Statement}
+Display the selected operating mode on the seven-segment displays and blink the LEDs associated with the selected configuration mode.
+\end{questionbox}
+
+\vspace{0.4cm}
+\textbf{2. Seven-segment Mode Display}
+
+In a configuration mode, the vertical display shows the timing value being edited, while the horizontal display shows the mode number. The display-update function assigns these values as follows:
+
+\begin{lstlisting}[language=C, caption={Display values in a configuration mode}, label={lst:exercise6_mode_display}, captionpos=b]
+if (mode != MODE_NORMAL) {
+    verticalDisplayValue = selectedTimeSeconds;
+    horizontalDisplayValue = (uint8_t)mode;
+    return;
+}
+\end{lstlisting}
+
+The four digits are multiplexed. EN0 and EN1 select the tens and ones digits of the vertical display; EN2 and EN3 select the horizontal display digits. The code refreshes one digit at a time, with a 2 ms interval between digit selections. The seven-segment patterns assume a common-anode display, where a segment is illuminated by driving its segment output LOW.
+
+\textbf{3. Mode-dependent LED Blinking}
+
+When a configuration mode is active, the code turns on only the two logical outputs of the selected color during the ON half-cycle. For example, Mode 2 blinks the red signals, Mode 3 blinks the amber/yellow signals, and Mode 4 blinks the green signals. The other traffic-light outputs are turned off during configuration.
+
+\begin{lstlisting}[language=C, caption={Selected-color output in configuration modes}, label={lst:exercise6_led_blink}, captionpos=b]
+else if (blinkOn) {
+    if (mode == MODE_SET_RED) {
+        onMask = R_1_Pin | R_2_Pin;
+    } else if (mode == MODE_SET_YELLOW) {
+        onMask = Y_1_Pin | Y_2_Pin;
+    } else if (mode == MODE_SET_GREEN) {
+        onMask = G_1_Pin | G_2_Pin;
+    }
+}
+\end{lstlisting}
+
+The outputs are active-low, so the implementation writes LOW to selected LED pins and HIGH to inactive LED pins. With a 10 ms timer interrupt and 25 ticks per half-period, the blink state toggles every 250 ms. An ON half-cycle and an OFF half-cycle therefore form a 500 ms cycle, equivalent to 2 Hz under the configured timer setting.
+
+\vspace{0.15cm}
+\noindent\textbf{GitHub source repository:} \href{https://github.com/haunguyen-2006/STM32LAB1}{STM32LAB1}.
+
+% IMAGE SLOT: Add the screenshot described below and save it as ex06_mode1_normal_countdown.png in the images/ folder.
+% If the file is absent, a labeled placeholder is displayed; the document remains compilable.
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/ex06_mode1_normal_countdown.png}{%
+        \includegraphics[width=0.98\textwidth]{images/ex06_mode1_normal_countdown.png}%
+    }{%
+        \fbox{\parbox[c][4.6cm][c]{0.92\textwidth}{%
+            \centering\textbf{IMAGE SLOT -- Mode 1 normal operation}\\[6pt]
+            Insert a Proteus screenshot in Mode 1 showing the two roads in a valid opposing-light state (one green or amber, the other red) and both countdown values on the four seven-segment digits.\\[6pt]
+            \texttt{images/ex06\_mode1\_normal\_countdown.png}%
+        }}%
+    }
+    \caption{Mode 1 traffic-light operation and countdown displays in Proteus}
+    \label{fig:exercise6_mode1_simulation}
+\end{figure}
+
+
+
+\begin{resultbox}
+In Modes 2--4, the code displays the selected duration and mode number, while blinking the corresponding color. The 2 Hz result depends on the current 10 ms timer interval because the half-period constant is fixed at 25 ticks.
+\end{resultbox}

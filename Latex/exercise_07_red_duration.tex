@@ -1,0 +1,57 @@
+\clearpage
+\section*{Exercise 7: Increasing the Red LED Duration}
+\addcontentsline{toc}{section}{Exercise 7: Increasing the Red LED Duration}
+
+\begin{questionbox}{1. Problem Statement}
+Use Button 2 to modify the red-light duration and Button 3 to confirm the selected value. The value must remain within the valid range and must be consistent with the green and amber durations.
+\end{questionbox}
+
+\vspace{0.4cm}
+\textbf{2. Red-duration Configuration}
+
+Mode 2 selects \texttt{redTimeSeconds} as the editable value. A short Button 2 press increases the selection by one unit. In the supplied implementation, holding Button 2 long enough generates one decrement event; this extra behavior is not required by the PDF but is implemented in the code. Button 3 commits the selected red value.
+
+The code preserves the timing relationship
+\[
+    T_{\mathrm{red}} = T_{\mathrm{green}} + T_{\mathrm{amber}}.
+\]
+Because the green duration must remain positive, the minimum allowed red value is the current amber duration plus one. The maximum configured value is 99.
+
+\begin{lstlisting}[language=C, caption={Red timing validation and confirmation}, label={lst:exercise7_red_confirm}, captionpos=b]
+if (mode == MODE_SET_RED) {
+    redTimeSeconds = selectedTimeSeconds;
+    greenTimeSeconds =
+        (uint8_t)(redTimeSeconds - yellowTimeSeconds);
+}
+\end{lstlisting}
+
+\textbf{3. Example}
+
+With the default values red = 10, amber = 3, and green = 7, increasing red to 14 and pressing Button 3 keeps amber at 3 and updates green to \(14 - 3 = 11\). Thus red remains equal to green plus amber. Since one displayed unit corresponds to 0.5 seconds of real simulation time in the supplied code, these values are timing units rather than one-second real-time intervals.
+
+\textbf{4. Boundary Behavior}
+
+The selected value wraps to the minimum when increasing past the maximum, and wraps to the maximum when decreasing below the minimum. This prevents the timing value from leaving the allowed range. The long-press threshold currently evaluates to 1.5 seconds, notwithstanding comments that mention one second.
+
+\vspace{0.2cm}
+\vspace{0.15cm}
+\noindent\textbf{GitHub source repository:} \href{https://github.com/haunguyen-2006/STM32LAB1}{STM32LAB1}.
+
+% IMAGE SLOT: Add the screenshot described below and save it as ex07_red_duration_mode2.png in the images/ folder.
+% If the file is absent, a labeled placeholder is displayed; the document remains compilable.
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/ex07_red_duration_mode2.png}{%
+        \includegraphics[width=0.98\textwidth]{images/ex07_red_duration_mode2.png}%
+    }{%
+        \fbox{\parbox[c][4.4cm][c]{0.92\textwidth}{%
+            \centering\textbf{IMAGE SLOT -- Mode 2 red-duration configuration}\\[6pt]
+            Insert a Proteus screenshot of Mode 2 showing the red LEDs blinking, the currently selected red timing value on the timing display, and mode number 2 on the other display.\\[6pt]
+            \texttt{images/ex07\_red\_duration\_mode2.png}%
+        }}%
+    }
+    \caption{Mode 2: red-duration configuration and LED feedback}
+    \label{fig:exercise7_red_mode_simulation}
+\end{figure}
+
+

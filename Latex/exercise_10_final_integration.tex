@@ -1,0 +1,80 @@
+\clearpage
+\section*{Exercise 10: Final Project Integration}
+\addcontentsline{toc}{section}{Exercise 10: Final Project Integration}
+
+\begin{questionbox}{1. Problem Statement}
+Integrate the previous exercises into one traffic-light application. The project must support the normal traffic sequence, four operating modes, button debouncing, seven-segment countdown display, mode-dependent LED blinking, and adjustable red, amber, and green durations.
+\end{questionbox}
+
+\vspace{0.4cm}
+\textbf{2. Integrated Runtime Behavior}
+
+At startup, \texttt{mode} is initialized to Mode 1 and the traffic phase is initialized to vertical green with horizontal red. The main loop processes elapsed timer ticks, handles debounced button events, refreshes the display values, updates the traffic outputs when needed, and scans the multiplexed digits. The timer callback increments a shared 10 ms tick counter and samples the buttons.
+
+\noindent\textbf{Source repository:} \href{https://github.com/haunguyen-2006/STM32LAB1}{GitHub -- STM32LAB1}.\par
+\noindent\textbf{Demonstration video:} \textit{[Insert the shareable video URL after recording and uploading the final demo.]}
+
+\begin{table}[H]
+    \centering
+    \small
+    \caption{Integrated operating modes}
+    \label{tab:exercise10_modes}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{3.3cm} X}
+        \toprule
+        \textbf{Mode} & \textbf{Purpose} & \textbf{Visible behavior} \\
+        \midrule
+        Mode 1 & Normal traffic operation & Traffic phases alternate between the vertical and horizontal roads. The displays show countdown values for the active and waiting directions. \\
+        Mode 2 & Set red duration & Red signals blink; the vertical display shows the selected value and the horizontal display shows 2. \\
+        Mode 3 & Set amber duration & Amber/yellow signals blink; the vertical display shows the selected value and the horizontal display shows 3. \\
+        Mode 4 & Set green duration & Green signals blink; the vertical display shows the selected value and the horizontal display shows 4. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\textbf{3. Default Timing and Simulation Scale}
+
+The source initializes red = 10, amber = 3, and green = 7, with red derived from green plus amber. The traffic phases use the green or amber configuration value to determine their tick duration. The source deliberately defines one displayed countdown unit as 0.5 seconds of simulation time. Therefore, the default green phase lasts about 3.5 seconds, the amber phase about 1.5 seconds, and the red waiting interval about 5 seconds. One complete two-road cycle lasts about 10 seconds at this accelerated simulation scale.
+
+\textbf{4. Functional Test Checklist}
+
+\begin{enumerate}[leftmargin=1.2cm]
+    \item Start the simulation and verify that Mode 1 begins with the vertical road green and the horizontal road red.
+    \item Press Button 1 and verify the mode sequence: red configuration, amber configuration, green configuration, then normal operation.
+    \item In Modes 2--4, check that the corresponding color blinks and the other traffic colors are off.
+    \item Confirm that the selected timing value and the mode number appear on the two pairs of seven-segment digits.
+    \item Use Button 2 to increase a timing value with a short press; verify the long-press decrement behavior if it is part of the intended user interface.
+    \item Press Button 3 and verify the saved value and the relationship red = green + amber.
+    \item Return to Mode 1 and verify phase transitions and countdown values in both directions.
+\end{enumerate}
+
+% IMAGE SLOT: Add the screenshot described below and save it as ex10_final_integrated_simulation.png in the images/ folder.
+% If the file is absent, a labeled placeholder is displayed; the document remains compilable.
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/ex10_final_integrated_simulation.png}{%
+        \includegraphics[width=0.98\textwidth]{images/ex10_final_integrated_simulation.png}%
+    }{%
+        \fbox{\parbox[c][5.0cm][c]{0.92\textwidth}{%
+            \centering\textbf{IMAGE SLOT -- Final integrated simulation}\\[6pt]
+            Insert a clear Proteus runtime screenshot of the final integrated application. Prefer a frame where the traffic lights and all four countdown digits are visible. If useful, prepare a small composite of Mode 1 and the three configuration modes instead of a cropped or unreadable schematic.\\[6pt]
+            \texttt{images/ex10\_final\_integrated\_simulation.png}%
+        }}%
+    }
+    \caption{Final integrated traffic-light application running in Proteus}
+    \label{fig:exercise10_final_simulation}
+\end{figure}
+
+\textbf{5. Review Findings and Remaining Checks}
+
+\begin{itemize}[leftmargin=1.2cm]
+    \item \textbf{Timer interrupt setup:} the uploaded source calculates a 10 ms TIM2 interval, but the associated HAL MSP/NVIC and interrupt-handler file must be present in the STM32 project.
+    \item \textbf{Blink parameter:} the fixed 25-tick half-period gives 2 Hz only with a 10 ms tick. Exercise 4 should be completed with an elapsed-time method before changing the timer interval.
+    \item \textbf{Button 2 threshold:} the source constant is 1500 ms although comments say one second. The code and report should use a consistent intended threshold.
+    \item \textbf{Input/output modules:} button and display logic are contained in \texttt{main.c}; the provided files do not show separate input-reading or output-display modules.
+    \item \textbf{Proteus evidence:} the supplied files contain GPIO pin assignments but not a full screenshot/export of the complete Proteus circuit or a demonstration video. Those artifacts must be added before claiming that the complete hardware schematic and demo have been submitted.
+\end{itemize}
+
+\begin{resultbox}
+The provided source implements the overall four-mode traffic-light behavior, button event processing, timing configuration, and multiplexed display logic. The review items above should be verified or corrected in the project before the final submission is described as fully compliant with every exercise requirement.
+\end{resultbox}
+

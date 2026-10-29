@@ -1,0 +1,46 @@
+\clearpage
+\section*{Exercise 4: Modify Timer Parameters}
+\addcontentsline{toc}{section}{Exercise 4: Modify Timer Parameters}
+
+\begin{questionbox}{1. Problem Statement}
+Modify the timer-related logic so that changing the timer interrupt interval does not unnecessarily change the application timing. In particular, the lab asks for an LED blink frequency of 2 Hz to remain stable when the interrupt interval is changed from 10 ms to values such as 1 ms or 100 ms.
+\end{questionbox}
+
+\vspace{0.4cm}
+\textbf{2. Timing Model in the Supplied Code}
+
+The source defines a 10 ms base interval and derives the number of base ticks per second:
+
+\begin{lstlisting}[language=C, caption={Timer-related constants in main.c}, label={lst:exercise4_timer_constants}, captionpos=b]
+#define TIMER_CYCLE_MS        10U
+#define TICKS_PER_SECOND      (1000U / TIMER_CYCLE_MS)
+#define TRAFFIC_COUNTDOWN_TICKS_PER_SECOND (TICKS_PER_SECOND / 2U)
+#define BLINK_HALF_PERIOD_TICKS 25U
+\end{lstlisting}
+
+At a 10 ms timer interval, 25 ticks represent 250 ms. Toggling the blink state every 250 ms creates a 500 ms full on/off cycle, which corresponds to 2 Hz. The countdown is deliberately scaled separately: one displayed countdown unit elapses every 0.5 seconds of simulation time.
+
+\textbf{3. Limitation Found During Review}
+
+The traffic countdown derives its tick count from the timer-cycle parameter. The blink threshold, however, is a fixed value of 25 ticks rather than a value derived from that parameter. The supplied implementation therefore assumes a 10 ms timer interrupt. Simply changing the interrupt to 1 ms or 100 ms without changing the blink threshold would change the blink frequency and would not meet the full parameter-independence requirement.
+
+\textbf{4. Recommended Time-based Approach}
+
+A more maintainable approach is to accumulate elapsed milliseconds and toggle the LED when the half-period has elapsed, rather than treating a fixed number of interrupts as a fixed amount of time:
+
+\begin{lstlisting}[language=C, caption={Suggested elapsed-time accumulator for the blink half-period}, label={lst:exercise4_blink_fix}, captionpos=b]
+#define BLINK_HALF_PERIOD_MS 250U
+static uint16_t blinkElapsedMs = 0U;
+
+/* Call this once per timer update. */
+blinkElapsedMs += TIMER_CYCLE_MS;
+if (blinkElapsedMs >= BLINK_HALF_PERIOD_MS) {
+    blinkElapsedMs -= BLINK_HALF_PERIOD_MS;
+    blinkOn = (uint8_t)!blinkOn;
+}
+\end{lstlisting}
+
+For 1 ms and 10 ms timer intervals, this reaches the 250 ms half-period exactly. With a 100 ms interval, 250 ms is not an integer multiple of the timer tick; the accumulator preserves the average timing by alternating 200 ms and 300 ms intervals. If a strict 2 Hz waveform with no timing jitter is required, a finer time base or a separate timer should be used.
+
+\vspace{0.15cm}
+\noindent\textbf{GitHub source repository:} \href{https://github.com/haunguyen-2006/STM32LAB1}{STM32LAB1}.
